@@ -453,5 +453,109 @@ def delete_category(category_id):
 
     return jsonify({"message": "Category deleted successfully"}), 200
 
+
+# CREATE: Add a new book
+@app.route('/books', methods=['POST'])
+def create_book():
+    data = request.get_json()
+
+    # Input validation
+    if not data or not data.get('isbn') or not data.get('book_title') or not data.get('date_of_publication') or not data.get('category_id'):
+        return jsonify({"error": "Bad Request: Missing required fields"}), 400
+
+    isbn = data['isbn']
+    book_title = data['book_title']
+    date_of_publication = data['date_of_publication']
+    category_id = data['category_id']
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    # Insert the book into the database
+    cursor.execute('INSERT INTO books (isbn, book_title, date_of_publication, category_id) VALUES (%s, %s, %s, %s)', 
+                   (isbn, book_title, date_of_publication, category_id))
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({"message": "Book created successfully"}), 201
+
+# READ: Get all books
+@app.route('/books', methods=['GET'])
+def get_books():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM books')
+    books = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    # If no books exist
+    if not books:
+        return jsonify({"message": "No books found"}), 404
+
+    return jsonify(books), 200
+
+# READ: Get a specific book by ISBN
+@app.route('/books/<string:isbn>', methods=['GET'])
+def get_book(isbn):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM books WHERE isbn = %s', (isbn,))
+    book = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    # If the book is not found
+    if book is None:
+        return jsonify({"error": "Book not found"}), 404
+
+    return jsonify(book), 200
+
+# UPDATE: Modify a book's information by ISBN
+@app.route('/books/<string:isbn>', methods=['PUT'])
+def update_book(isbn):
+    data = request.get_json()
+
+    # Input validation
+    if not data or not data.get('book_title') or not data.get('date_of_publication') or not data.get('category_id'):
+        return jsonify({"error": "Bad Request: Missing required fields"}), 400
+
+    book_title = data['book_title']
+    date_of_publication = data['date_of_publication']
+    category_id = data['category_id']
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    # Update the book details in the database
+    cursor.execute('UPDATE books SET book_title = %s, date_of_publication = %s, category_id = %s WHERE isbn = %s', 
+                   (book_title, date_of_publication, category_id, isbn))
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({"message": "Book updated successfully"}), 200
+
+# DELETE: Delete a book by ISBN
+@app.route('/books/<string:isbn>', methods=['DELETE'])
+def delete_book(isbn):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('DELETE FROM books WHERE isbn = %s', (isbn,))
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({"message": "Book deleted successfully"}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
