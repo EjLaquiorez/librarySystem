@@ -144,5 +144,36 @@ def test_delete_rule(client):
     assert response.status_code == 200 or response.status_code == 404  # Adjust based on your test data
 
 
+################################################################# Category Tests ###########################################################################
+def test_create_category(client):
+    try:
+        unique_category_name = f'Unique Category {uuid.uuid4()}'  # Ensure unique category name
+        response = client.post('/categories', json={
+            'category_name': unique_category_name
+        })
+        assert response.status_code == 201
+        assert b'Category created successfully' in response.data
+    except Exception as e:
+        pytest.fail(f"Error creating category: {str(e)}")
+
+def test_get_categories(client):
+    response = client.get('/categories')
+    assert response.status_code == 200
+    assert isinstance(response.json, list)
+
+def test_get_category(client):
+    response = client.get('/categories/1')  # Assuming there's a category with category_id 1
+    assert response.status_code == 200 or response.status_code == 404  # Adjust based on your test data
+
+def test_update_category(client):
+    response = client.put('/categories/1', json={
+        'category_name': 'Updated Category'
+    })
+    assert response.status_code == 200 or response.status_code == 404  # Adjust based on your test data
+
+def test_delete_category(client):
+    response = client.delete('/categories/1')  # Assuming there's a category with category_id 1
+    assert response.status_code == 200 or response.status_code == 404  # Adjust based on your test data
+
 if __name__ == "__main__":
     pytest.main()
