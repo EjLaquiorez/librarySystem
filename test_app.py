@@ -175,5 +175,43 @@ def test_delete_category(client):
     response = client.delete('/categories/1')  # Assuming there's a category with category_id 1
     assert response.status_code == 200 or response.status_code == 404  # Adjust based on your test data
 
+
+######################################################################### Book Tests #############################################################################
+def create_category(client):
+    unique_category_name = f'Unique Category {uuid.uuid4()}'  # Ensure unique category name
+    response = client.post('/categories', json={
+        'category_name': unique_category_name
+    })
+    assert response.status_code == 201
+    assert 'category_id' in response.json, "Response does not include 'category_id'"  # Ensure category_id is present
+    return response.json.get('category_id')  # Retrieve category_id
+
+
+def test_get_books(client):
+    response = client.get('/books')
+    assert response.status_code == 200
+    assert isinstance(response.json, list)
+
+def test_get_book(client):
+    response = client.get('/books/9780001122334')  # Assuming there's a book with this ISBN
+    assert response.status_code == 200 or response.status_code == 404  # Adjust based on your test data
+
+def test_update_book(client):
+    try:
+        unique_category_name = f'Unique Updated Books Category {uuid.uuid4()}'  # Ensure unique category name
+        response = client.put('/books/9783161484101', json={
+            'isbn': '9783161484101',  # Ensure ISBN fits the length
+            'book_title': 'Updated Book',
+            'date_of_publication': '2022-01-02',
+            'category_id': 2  # Ensure the category_id exists
+        })
+        assert response.status_code == 200 or response.status_code == 404
+    except Exception as e:
+        pytest.fail(f"Error updating book: {str(e)}")
+
+def test_delete_book(client):
+    response = client.delete('/books/9780001122334')  # Assuming there's a book with this ISBN
+    assert response.status_code == 200 or response.status_code == 404  # Adjust based on your test data
+
 if __name__ == "__main__":
     pytest.main()
