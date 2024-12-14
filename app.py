@@ -358,5 +358,100 @@ def delete_rule(rule_id):
     return jsonify({"message": "Rule deleted successfully"}), 200
 
 
+# CREATE: Add a new category
+@app.route('/categories', methods=['POST'])
+def create_category():
+    data = request.get_json()
+
+    # Input validation
+    if not data or not data.get('category_name'):
+        return jsonify({"error": "Bad Request: Missing required fields"}), 400
+
+    category_name = data['category_name']
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    # Insert the category into the database
+    cursor.execute('INSERT INTO categories (category_name) VALUES (%s)', (category_name,))
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({"message": "Category created successfully"}), 201
+
+# READ: Get all categories
+@app.route('/categories', methods=['GET'])
+def get_categories():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM categories')
+    categories = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    # If no categories exist
+    if not categories:
+        return jsonify({"message": "No categories found"}), 404
+
+    return jsonify(categories), 200
+
+# READ: Get a specific category by ID
+@app.route('/categories/<int:category_id>', methods=['GET'])
+def get_category(category_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM categories WHERE category_id = %s', (category_id,))
+    category = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    # If the category is not found
+    if category is None:
+        return jsonify({"error": "Category not found"}), 404
+
+    return jsonify(category), 200
+
+# UPDATE: Modify a category's information by ID
+@app.route('/categories/<int:category_id>', methods=['PUT'])
+def update_category(category_id):
+    data = request.get_json()
+
+    if not data or not data.get('category_name'):
+        return jsonify({"error": "Bad Request: Missing required fields"}), 400
+
+    category_name = data['category_name']
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('UPDATE categories SET category_name = %s WHERE category_id = %s', 
+                   (category_name, category_id))
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({"message": "Category updated successfully"}), 200
+
+# DELETE: Delete a category by ID
+@app.route('/categories/<int:category_id>', methods=['DELETE'])
+def delete_category(category_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('DELETE FROM categories WHERE category_id = %s', (category_id,))
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({"message": "Category deleted successfully"}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
