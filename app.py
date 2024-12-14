@@ -258,5 +258,105 @@ def calculate_overdue_fines(due_date):
         return overdue_days * fine_per_day
     return 0
 
+# CREATE: Add a new library rule
+@app.route('/rules', methods=['POST'])
+def create_rule():
+    data = request.get_json()
+
+    # Input validation
+    if not data or not data.get('rule_id') or not data.get('rule_description') or not data.get('rule_value'):
+        return jsonify({"error": "Bad Request: Missing required fields"}), 400
+
+    rule_id = data['rule_id']
+    rule_description = data['rule_description']
+    rule_value = data['rule_value']
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    # Insert the rule into the database
+    cursor.execute('INSERT INTO library_rules (rule_id, rule_description, rule_value) VALUES (%s, %s, %s)', 
+                   (rule_id, rule_description, rule_value))
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({"message": "Rule created successfully"}), 201
+
+# READ: Get all library rules
+@app.route('/rules', methods=['GET'])
+def get_rules():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM library_rules')
+    rules = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    # If no rules exist
+    if not rules:
+        return jsonify({"message": "No rules found"}), 404
+
+    return jsonify(rules), 200
+
+# READ: Get a specific library rule by ID
+@app.route('/rules/<int:rule_id>', methods=['GET'])
+def get_rule(rule_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM library_rules WHERE rule_id = %s', (rule_id,))
+    rule = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    # If the rule is not found
+    if rule is None:
+        return jsonify({"error": "Rule not found"}), 404
+
+    return jsonify(rule), 200
+
+# UPDATE: Modify a library rule's information by ID
+@app.route('/rules/<int:rule_id>', methods=['PUT'])
+def update_rule(rule_id):
+    data = request.get_json()
+
+    if not data or not data.get('rule_description') or not data.get('rule_value'):
+        return jsonify({"error": "Bad Request: Missing required fields"}), 400
+
+    rule_description = data['rule_description']
+    rule_value = data['rule_value']
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('UPDATE library_rules SET rule_description = %s, rule_value = %s WHERE rule_id = %s', 
+                   (rule_description, rule_value, rule_id))
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({"message": "Rule updated successfully"}), 200
+
+# DELETE: Delete a library rule by ID
+@app.route('/rules/<int:rule_id>', methods=['DELETE'])
+def delete_rule(rule_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute('DELETE FROM library_rules WHERE rule_id = %s', (rule_id,))
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({"message": "Rule deleted successfully"}), 200
+
+
 if __name__ == '__main__':
     app.run(debug=True)
