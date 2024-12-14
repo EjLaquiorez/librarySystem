@@ -113,6 +113,36 @@ def test_calculate_overdue_fines():
         past_date_as_date = date.today() - timedelta(days=5)
         assert calculate_overdue_fines(past_date_as_date) == 5
 
+########################################################### Rule Tests ###################################################################
+def test_create_rule(client):
+    response = client.post('/rules', json={
+        'rule_id': 1,
+        'rule_description': 'No loud noises',
+        'rule_value': 1  # Assuming rule_value is numeric
+    })
+    assert response.status_code == 201
+    assert b'Rule created successfully' in response.data
+
+def test_get_rules(client):
+    response = client.get('/rules')
+    assert response.status_code == 200
+    assert isinstance(response.json, list)
+
+def test_get_rule(client):
+    response = client.get('/rules/1')  # Assuming there's a rule with rule_id 1
+    assert response.status_code == 200 or response.status_code == 404  # Adjust based on your test data
+
+def test_update_rule(client):
+    response = client.put('/rules/1', json={
+        'rule_description': 'No loud noises',
+        'rule_value': 2  # Assuming rule_value is numeric
+    })
+    assert response.status_code == 200 or response.status_code == 404  # Adjust based on your test data
+
+def test_delete_rule(client):
+    response = client.delete('/rules/1')  # Assuming there's a rule with rule_id 1
+    assert response.status_code == 200 or response.status_code == 404  # Adjust based on your test data
+
 
 if __name__ == "__main__":
     pytest.main()
