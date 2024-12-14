@@ -362,24 +362,21 @@ def delete_rule(rule_id):
 @app.route('/categories', methods=['POST'])
 def create_category():
     data = request.get_json()
-
-    # Input validation
-    if not data or not data.get('category_name'):
-        return jsonify({"error": "Bad Request: Missing required fields"}), 400
-
-    category_name = data['category_name']
+    category_name = data.get('category_name')
 
     connection = get_db_connection()
     cursor = connection.cursor()
 
-    # Insert the category into the database
     cursor.execute('INSERT INTO categories (category_name) VALUES (%s)', (category_name,))
     connection.commit()
+
+    category_id = cursor.lastrowid
 
     cursor.close()
     connection.close()
 
-    return jsonify({"message": "Category created successfully"}), 201
+    return jsonify({"message": "Category created successfully", "category_id": category_id}), 201
+
 
 # READ: Get all categories
 @app.route('/categories', methods=['GET'])
@@ -518,6 +515,7 @@ def get_book(isbn):
     return jsonify(book), 200
 
 # UPDATE: Modify a book's information by ISBN
+# UPDATE: Modify a book's information by ISBN
 @app.route('/books/<string:isbn>', methods=['PUT'])
 def update_book(isbn):
     data = request.get_json()
@@ -530,8 +528,17 @@ def update_book(isbn):
     date_of_publication = data['date_of_publication']
     category_id = data['category_id']
 
+    # Check if the category exists
     connection = get_db_connection()
     cursor = connection.cursor()
+
+    cursor.execute('SELECT COUNT(*) FROM categories WHERE category_id = %s', (category_id,))
+    category_exists = cursor.fetchone()[0]
+
+    if not category_exists:
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Bad Request: Category does not exist"}), 400
 
     # Update the book details in the database
     cursor.execute('UPDATE books SET book_title = %s, date_of_publication = %s, category_id = %s WHERE isbn = %s', 
@@ -542,6 +549,7 @@ def update_book(isbn):
     connection.close()
 
     return jsonify({"message": "Book updated successfully"}), 200
+
 
 # DELETE: Delete a book by ISBN
 @app.route('/books/<string:isbn>', methods=['DELETE'])
