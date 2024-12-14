@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, g
 import mysql.connector
 from config import Config  # Import configuration from config.py
 from datetime import datetime, timedelta, date  # Import datetime for fine calculation
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required  # Import JWT related functions
 
 app = Flask(__name__)
 
@@ -19,6 +20,15 @@ def get_db_connection():
             return None
     return g.db
 
+jwt = JWTManager(app)  # Initialize JWTManager with the app
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    if data['username'] == 'laquiorez' and data['password'] == '286unseen':
+        access_token = create_access_token(identity='admin')
+        return jsonify(access_token=access_token), 200
+    return jsonify({"message": "Invalid credentials"}), 401
 
 @app.teardown_appcontext
 def close_db_connection(exception):
